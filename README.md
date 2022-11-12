@@ -1,8 +1,8 @@
 Reveal solutions in JupyterLab
 
-Select a *contiguous* group of cells, right click and select 'Toggle Solution'.
+Select a number of cells, right click and select 'Toggle Solution'.
 
-If any of the cells are part of an existing solution, then all will be marked as non-solution cells. Otherwise if all are non-solution cells, they will form a group of solution cells where the first cell is retained whilst the remaining ones are hidden behind a button.
+If any of the cells are part of an existing solution, then all will be marked as non-solution cells. If all are non-solution cells, they will form a group of solution cells where the first cell is used as the leading solution text whilst the remaining cells are then hidden behind a button.
 
 Inspired by the following plugins, which this plugin also converts to its own native 'reveal' format:
 

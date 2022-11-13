@@ -204,9 +204,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
       viewer.revealed.then(() => {
         const { model } = viewer;
         if (!model) return error('huh? no notebook panel model!');
+
         model.contentChanged.connect(model => {
           viewer.content.fullyRendered.connect(() => {
-            sync(viewer.content.widgets);
+            const cells = viewer.content.widgets;
+            sync(cells);
           });
         });
 

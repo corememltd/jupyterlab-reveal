@@ -1,5 +1,14 @@
 .jp-Cell.reveal {
 }
 
-.jp-Cell.reveal-solution {
+.jp-Cell.reveal > .jp-Cell-footer {
+  height: auto;
+}
+
+.jp-Cell.reveal-hidden {
+  display: none !important;
+}
+
+.jp-Cell.reveal-button {
+  height: auto;
 }

@@ -18,17 +18,19 @@ import {
 } from '@jupyterlab/notebook';
 
 const PLUGIN = 'jupyterlab-reveal';
+
 const FLAG = 'reveal';
 const FLAG_HIDDEN = `${FLAG}-hidden`;
+
 const CLASS = FLAG;
 const CLASS_HIDDEN = `${CLASS}-hidden`;
-const CLASS_HEADER = `${CLASS}-header`;
+const CLASS_BUTTON = `${CLASS}-button`;
 
 /**
  * Initialization data for the jupyterlab-reveal extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'jupyterlab-reveal:plugin',
+  id: `${PLUGIN}:plugin`,
   autoStart: true,
   requires: [ INotebookTracker ],
   activate: (app: JupyterFrontEnd, tracker: INotebookTracker) => {
@@ -44,33 +46,87 @@ const plugin: JupyterFrontEndPlugin<void> = {
       }).catch(e => console.log(PLUGIN, 'dialog', e));
     }
 
-    function syncCells(cells: readonly Cell[]) {
+    function sync(cells: readonly Cell[]) {
       const ishidden = new Map();
-      cells.forEach(c => {
-        const reveal = c.model.metadata.get(FLAG);
-        if (typeof reveal == 'string') {
-          const hidden = c.model.metadata.get(FLAG_HIDDEN);
-          c.addClass(CLASS);
-          if (typeof hidden == 'boolean') {
-            // in the header cell
-            ishidden.set(reveal, hidden);
-            const header = c.node.querySelector('.jp-Cell-header');
-            if (!header) return error('huh? no cell header!');
-            const div = document.createElement('div');
-            div.classList.add(CLASS_HEADER);
-            header.appendChild(div);
-          } else {
-            // in a solution element
-            if (ishidden.get(reveal)) {
+
+      function addHeader(cell: Cell) {
+        const footer = cell.node.querySelector('.jp-Cell-footer');
+        if (!footer) return error('huh? no cell footer!');
+        if (footer.querySelector(`.${CLASS_BUTTON}`)) return;
+
+        const id = cell.model.metadata.get(FLAG);
+        let hidden = cell.model.metadata.get(FLAG_HIDDEN);
+
+        const div = document.createElement('div');
+        div.classList.add(CLASS_BUTTON);
+
+        const p = document.createElement('p');
+        p.innerText = 'Solution block';
+        div.appendChild(p);
+
+        const button = document.createElement('button');
+        button.innerText = `${hidden ? 'Reveal' : 'Hide'} solution`;
+        button.addEventListener('click', e => {
+          // unable to use parent on the cell
+          const { activeNotebookPanel } = notebookTools;
+          if (!activeNotebookPanel) return error('huh? no active notebook panel!');
+
+          const { content } = activeNotebookPanel;
+          const { widgets: cells } = content;
+
+          hidden = !hidden;
+          cell.model.metadata.set(FLAG_HIDDEN, hidden);
+
+          button.innerText = `${hidden ? 'Reveal' : 'Hide'} solution`;
+
+          cells.filter(c => c.model.metadata.get(FLAG) == id).slice(1).forEach(c => {
+            if (hidden) {
               c.addClass(CLASS_HIDDEN);
             } else {
               c.removeClass(CLASS_HIDDEN);
             }
+          });
+        }); 
+        div.appendChild(button);
+
+        footer.appendChild(div);
+      }
+
+      cells.forEach(cell => {
+        const reveal = cell.model.metadata.get(FLAG);
+        if (typeof reveal == 'string') {
+          // fsck - hidden is only on the first cell
+          if (typeof cell.model.metadata.get(FLAG_HIDDEN) == 'boolean' && ishidden.has(reveal)) {
+            cell.model.metadata.delete(FLAG_HIDDEN);
+          }
+
+          cell.addClass(CLASS);
+
+          const hidden = cell.model.metadata.get(FLAG_HIDDEN);
+          if (typeof hidden == 'boolean') {
+            // in the footer cell
+            ishidden.set(reveal, hidden);
+            addHeader(cell);
+          } else {
+            // in a solution element
+
+            // fsck - hidden must be on the first cell
+            if (!ishidden.has(reveal)) {
+              cell.model.metadata.set(FLAG_HIDDEN, false);
+              addHeader(cell);
+              return;
+            }
+
+            if (ishidden.get(reveal)) {
+              cell.addClass(CLASS_HIDDEN);
+            } else {
+              cell.removeClass(CLASS_HIDDEN);
+            }
           }
         } else {
-          c.removeClass(CLASS);
-          c.removeClass(CLASS_HIDDEN);
-          const classHeader = c.node.querySelector(`.jp-Cell-header > ${CLASS_HEADER}`);
+          cell.removeClass(CLASS);
+          cell.removeClass(CLASS_HIDDEN);
+          const classHeader = cell.node.querySelector(`.jp-Cell-footer > .${CLASS_BUTTON}`);
           if (classHeader) classHeader.remove();
         }
       });
@@ -111,6 +167,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       execute: () => {
         const { activeNotebookPanel, selectedCells } = notebookTools;
         if (!activeNotebookPanel) return error('huh? nothing active!');
+        if (selectedCells.length < 2) return error('must select more than a single cell');
 
         const { content } = activeNotebookPanel;
         const { widgets: cells } = content;
@@ -132,7 +189,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         });
 
         // all cells incase someone splits some by accident
-        syncCells(cells);
+        sync(cells);
       }
     });
 
@@ -142,11 +199,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
       rank: 30
     });
 
-    tracker.currentChanged.connect((tracker, viewer) => {
+    tracker.widgetAdded.connect((tracker, viewer) => {
       if (!viewer) return;
-      const cells = viewer.content.widgets;
-      convert(cells);
-      syncCells(cells);
+      viewer.revealed.then(() => {
+        const cells = viewer.content.widgets;
+        convert(cells);
+        sync(cells);
+      });
     });
   }
 };

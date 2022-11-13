@@ -137,13 +137,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       // exercise2
       cells.forEach((c, i) => {
+        const solution2 = c.model.metadata.get('solution2');
 	if (c.model.metadata.get('solution2_first')) {
           c.model.metadata.delete('solution2_first');
           id = generateId();
           c.model.metadata.set(FLAG, id);	// guard
-          c.model.metadata.set(FLAG_HIDDEN, false);
+          c.model.metadata.set(FLAG_HIDDEN, solution2 == 'hidden');
         }
-	if (c.model.metadata.get('solution2')) {
+	if (solution2) {
           c.model.metadata.delete('solution2');
           c.model.metadata.set(FLAG, id);
         }
@@ -177,7 +178,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
           } else {
             w.model.metadata.set(FLAG, id);
             if (i == 0) {
-              w.model.metadata.set(FLAG_HIDDEN, false);
+              w.model.metadata.set(FLAG_HIDDEN, true);
             } else {
               w.model.metadata.delete(FLAG_HIDDEN);
             }

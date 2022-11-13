@@ -22,9 +22,9 @@ const PLUGIN = 'jupyterlab-reveal';
 const FLAG = 'reveal';
 const FLAG_HIDDEN = `${FLAG}-hidden`;
 
-const CLASS = FLAG;
-const CLASS_HIDDEN = `${CLASS}-hidden`;
+const CLASS = `${FLAG}Plugin`;
 const CLASS_BUTTON = `${CLASS}-button`;
+const CLASS_HIDDEN = `${CLASS}-hidden`;
 
 /**
  * Initialization data for the jupyterlab-reveal extension.
@@ -202,6 +202,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
     tracker.widgetAdded.connect((tracker, viewer) => {
       if (!viewer) return;
       viewer.revealed.then(() => {
+        const { model } = viewer;
+        if (!model) return error('huh? no notebook panel model!');
+        model.contentChanged.connect(model => {
+          viewer.content.fullyRendered.connect(() => {
+            sync(viewer.content.widgets);
+          });
+        });
+
         const cells = viewer.content.widgets;
         convert(cells);
         sync(cells);

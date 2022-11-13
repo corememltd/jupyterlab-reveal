@@ -1,14 +1,15 @@
-.jp-Cell.reveal {
+.jp-Cell.revealPlugin {
+  background-color: #ddeeff !important;
 }
 
-.jp-Cell.reveal > .jp-Cell-footer {
+.jp-Cell.revealPlugin > .jp-Cell-footer {
   height: auto;
 }
 
-.jp-Cell.reveal-hidden {
+.jp-Cell.revealPlugin-button {
+  margin-top: 0.5em;
+}
+
+.jp-Cell.revealPlugin-hidden {
   display: none !important;
-}
-
-.jp-Cell.reveal-button {
-  height: auto;
 }

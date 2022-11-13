@@ -4,9 +4,10 @@ Select a number of cells, right click and select 'Toggle Solution'.
 
 If any of the cells are part of an existing solution, then all will be marked as non-solution cells. If all are non-solution cells, they will form a group of solution cells where the first cell is used as the leading solution text whilst the remaining cells are then hidden behind a button.
 
-Inspired by the following plugins, which this plugin also converts to its own native 'reveal' format:
+Inspired by the following plugins:
 
  * [Exercise2](https://jupyter-contrib-nbextensions.readthedocs.io/en/latest/nbextensions/exercise2/readme.html)
+     * on loading a notebook that used Exercise2, this extension will migrate to the notebook to its own tag formatting
  * [@rmotr/jupyterlab-solutions](https://www.npmjs.com/package/@rmotr/jupyterlab-solutions)
 
 ## Requirements

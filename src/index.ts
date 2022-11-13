@@ -60,10 +60,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const div = document.createElement('div');
         div.classList.add(CLASS_BUTTON);
 
-        const p = document.createElement('p');
-        p.innerText = 'Solution block';
-        div.appendChild(p);
-
         const button = document.createElement('button');
         button.innerText = `${hidden ? 'Reveal' : 'Hide'} solution`;
         button.addEventListener('click', e => {

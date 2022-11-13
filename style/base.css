@@ -7,7 +7,27 @@
 }
 
 .revealPlugin-button {
-  margin-top: 0.5em;
+  margin-top: calc(2 * var(--jp-cell-padding));
+  margin-left: var(--jp-cell-prompt-width);
+  padding-left: calc(2 * var(--jp-code-padding));
+  padding-bottom: var(--jp-cell-padding);
+  color: var(--jp-cell-prompt-not-active-font-color);
+  font-style: italic;
+}
+
+.revealPlugin-button > button {
+  color: #FFF;
+  width: 10em;
+  background-color: #3390FF;
+  text-transform: uppercase;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.revealPlugin-button > button:hover {
+  opacity: 1.0;
 }
 
 .revealPlugin-hidden {

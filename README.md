@@ -18,7 +18,8 @@ Inspired by the following plugins, which this plugin also converts to its own na
 To install the extension, execute:
 
 ```bash
-pip install jupyterlab_reveal
+#pip install jupyterlab_reveal
+pip install git+https://github.com/corememltd/jupyterlab-reveal.git
 ```
 
 ## Uninstall

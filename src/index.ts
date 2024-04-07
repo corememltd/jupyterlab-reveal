@@ -14,6 +14,7 @@ import {
 
 import {
   INotebookTracker,
+  NotebookPanel,
   NotebookTools
 } from '@jupyterlab/notebook';
 
@@ -51,11 +52,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       function addHeader(cell: Cell) {
         const footer = cell.node.querySelector('.jp-Cell-footer');
-        if (!footer) return error('huh? no cell footer!');
+        if (!footer) return;
         if (footer.querySelector(`.${CLASS_BUTTON}`)) return;
 
-        const id = cell.model.metadata.get(FLAG);
-        let hidden = cell.model.metadata.get(FLAG_HIDDEN);
+        const id = cell.model.getMetadata(FLAG);
+        let hidden = cell.model.getMetadata(FLAG_HIDDEN);
 
         const div = document.createElement('div');
         div.classList.add(CLASS_BUTTON);
@@ -71,11 +72,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
           const { widgets: cells } = content;
 
           hidden = !hidden;
-          cell.model.metadata.set(FLAG_HIDDEN, hidden);
+          cell.model.setMetadata(FLAG_HIDDEN, hidden);
 
           button.innerText = `${hidden ? 'Reveal' : 'Hide'} solution`;
 
-          cells.filter(c => c.model.metadata.get(FLAG) == id).slice(1).forEach(c => {
+          cells.filter(c => c.model.getMetadata(FLAG) == id).slice(1).forEach(c => {
             if (hidden) {
               c.addClass(CLASS_HIDDEN);
             } else {
@@ -89,16 +90,16 @@ const plugin: JupyterFrontEndPlugin<void> = {
       }
 
       cells.forEach(cell => {
-        const reveal = cell.model.metadata.get(FLAG);
+        const reveal = cell.model.getMetadata(FLAG);
         if (typeof reveal == 'string') {
           // fsck - hidden is only on the first cell
-          if (typeof cell.model.metadata.get(FLAG_HIDDEN) == 'boolean' && ishidden.has(reveal)) {
-            cell.model.metadata.delete(FLAG_HIDDEN);
+          if (typeof cell.model.getMetadata(FLAG_HIDDEN) == 'boolean' && ishidden.has(reveal)) {
+            cell.model.deleteMetadata(FLAG_HIDDEN);
           }
 
           cell.addClass(CLASS);
 
-          const hidden = cell.model.metadata.get(FLAG_HIDDEN);
+          const hidden = cell.model.getMetadata(FLAG_HIDDEN);
           if (typeof hidden == 'boolean') {
             // in the footer cell
             ishidden.set(reveal, hidden);
@@ -108,7 +109,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
             // fsck - hidden must be on the first cell
             if (!ishidden.has(reveal)) {
-              cell.model.metadata.set(FLAG_HIDDEN, false);
+              cell.model.setMetadata(FLAG_HIDDEN, false);
               addHeader(cell);
               return;
             }
@@ -137,23 +138,23 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
       // exercise2
       cells.forEach((c, i) => {
-        const solution2 = c.model.metadata.get('solution2');
-	if (c.model.metadata.get('solution2_first')) {
-          c.model.metadata.delete('solution2_first');
+        const solution2 = c.model.getMetadata('solution2');
+	if (c.model.getMetadata('solution2_first')) {
+          c.model.deleteMetadata('solution2_first');
           id = generateId();
-          c.model.metadata.set(FLAG, id);	// guard
-          c.model.metadata.set(FLAG_HIDDEN, solution2 == 'hidden');
+          c.model.setMetadata(FLAG, id);	// guard
+          c.model.setMetadata(FLAG_HIDDEN, solution2 == 'hidden');
         }
 	if (solution2) {
-          c.model.metadata.delete('solution2');
-          c.model.metadata.set(FLAG, id);
+          c.model.deleteMetadata('solution2');
+          c.model.setMetadata(FLAG, id);
         }
       });
 
 //      // @rmotr/jupyterlab-solutions
 //      cells.forEach(c => {
-//        if (c.model.metadata.get('is_solution')) {
-//          c.model.metadata.set(FLAG, true);
+//        if (c.model.getMetadata('is_solution')) {
+//          c.model.setMetadata(FLAG, true);
 //        }
 //      });
     }
@@ -170,17 +171,17 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const { widgets: cells } = content;
 
 	const id = generateId();
-        const reveal = selectedCells.some(w => w.model.metadata.has(FLAG));
+        const reveal = selectedCells.some(w => FLAG in w.model.metadata);
         selectedCells.forEach((w, i) => {
           if (reveal) {
-            w.model.metadata.delete(FLAG);
-            w.model.metadata.delete(FLAG_HIDDEN);
+            w.model.deleteMetadata(FLAG);
+            w.model.deleteMetadata(FLAG_HIDDEN);
           } else {
-            w.model.metadata.set(FLAG, id);
+            w.model.setMetadata(FLAG, id);
             if (i == 0) {
-              w.model.metadata.set(FLAG_HIDDEN, true);
+              w.model.setMetadata(FLAG_HIDDEN, true);
             } else {
-              w.model.metadata.delete(FLAG_HIDDEN);
+              w.model.deleteMetadata(FLAG_HIDDEN);
             }
           }
         });
@@ -193,26 +194,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
     app.contextMenu.addItem({
       command: `${PLUGIN}:toggle`,
       selector: '.jp-Cell',
-      rank: 30
+      rank: 31
     });
 
-    tracker.widgetAdded.connect((tracker, viewer) => {
-      if (!viewer) return;
-      viewer.revealed.then(() => {
-        const { model } = viewer;
-        if (!model) return error('huh? no notebook panel model!');
+    tracker.widgetAdded.connect(async (tracker: INotebookTracker, notebookPanel: NotebookPanel) => {
+      await notebookPanel.revealed;
+      await notebookPanel.sessionContext.ready
 
-        model.contentChanged.connect(model => {
-          viewer.content.fullyRendered.connect(() => {
-            const cells = viewer.content.widgets;
-            sync(cells);
-          });
-        });
+      if (!notebookPanel.model) return;
 
-        const cells = viewer.content.widgets;
-        convert(cells);
-        sync(cells);
-      });
+      const cells = notebookPanel.content.widgets;
+      convert(cells);
+      sync(cells);
+
+      notebookPanel.model.contentChanged.connect(model => sync(cells));
     });
   }
 };

@@ -1,3 +1,5 @@
+# jupyterlab_reveal
+
 Reveal solutions in JupyterLab
 
 Select a number of cells, right click and select 'Toggle Solution'.
@@ -12,14 +14,13 @@ Inspired by the following plugins:
 
 ## Requirements
 
-- JupyterLab >= 3.0
+- JupyterLab >= 4.0.0
 
 ## Install
 
 To install the extension, execute:
 
 ```bash
-#pip install jupyterlab_reveal
 pip install git+https://github.com/corememltd/jupyterlab-reveal.git
 ```
 
@@ -45,12 +46,7 @@ The `jlpm` command is JupyterLab's pinned version of
 # Clone the repo to your local environment
 # Change directory to the jupyterlab_reveal directory
 # Install package in development mode
-virtualenv venv
-. venv/bin/activate
-# if you have /tmp mounted noexec then you will need to include (you will see an error about not being able to load an .so)
-# export TMPDIR="$PWD/venv/tmp"
-pip install jupyterlab
-pip install -e .
+pip install -e "."
 # Link your development version of the extension with JupyterLab
 jupyter labextension develop . --overwrite
 # Rebuild extension Typescript source after making changes
@@ -78,7 +74,6 @@ jupyter lab build --minimize=False
 
 ```bash
 pip uninstall jupyterlab_reveal
-deactivate
 ```
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
